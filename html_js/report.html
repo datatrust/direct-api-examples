@@ -1,0 +1,326 @@
+<HTML>
+<HEAD>
+	<TITLE>Dynamic Voter Report</TITLE>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" src="https://fgnass.github.io/spin.js/spin.min.js"></script>
+<script>
+	// your token (for permissions and billing purposes)
+	var token;
+
+	// available keys (for deciphering the results)
+	var SexKey = {"M":"Male","F":"Female","U":"Unknown"};
+	var OfficialPartyKey = {
+			'R': 'Republican',
+			'D': 'Democrat',
+			'I': 'Independent',
+			'U': 'Unaffiliated',
+			'T': 'Libertarian',
+			'M': 'Reform',
+			'G': 'Green',
+			'C': 'Conservative',
+			'L': 'Liberal',
+			'X': 'US Taxpayers',
+			'F': 'Right to Life',
+			'P': 'Peace and Freedom',
+			'E': 'American Independence',
+			'S': 'Socialist',
+			'W': 'Natural law',
+			'A': 'State specific',
+			'O': 'Other',
+			'N': 'None'
+		};
+	var RNCCalcPartyKey = {
+			'1': 'Hard GOP',
+			'2': 'Weak GOP',
+			'3': 'Swing',
+			'4': 'Weak Dem',
+			'5': 'Strong Dem'
+		};
+
+	// the tables/filters you'd like displayed
+	var filters = {"CongressionalDistrict":"", "StateSenateDistrict":"", "StateLowerHouseDistrict":"", "PrecinctName":""};
+	 var tables = {"Sex":SexKey, "Party":OfficialPartyKey, "RNCCalcParty":RNCCalcPartyKey, "CountyName":null};
+
+	// available states (for the states dropdown)
+	var states = {"Illinois/Lincoln":"IL","Alabama":"AL","Alaska":"AK","Arizona":"AZ","Arkansas":"AR","California":"CA","Colorado":"CO","Connecticut":"CT","Delaware":"DE", "District Of Columbia":"DC","Florida":"FL","Georgia":"GA","Hawaii":"HI","Idaho":"ID","Indiana":"IN","Iowa":"IA","Kansas":"KS","Kentucky":"KY","Louisiana":"LA","Maine":"ME","Maryland":"MD","Massachusetts":"MA","Michigan":"MI","Minnesota":"MN","Mississippi":"MS","Missouri":"MO","Montana":"MT","Nebraska":"NE","Nevada ":"NV","New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY","North Carolina":"NC","North Dakota":"ND","Ohio":"OH","Oklahoma ":"OK","Oregon":"OR","Pennsylvania":"PA","Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD","Tennessee":"TN","Texas":"TX","Utah":"UT","Vermont":"VT","Virginia":"VA","Washington":"WA","West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY"};
+
+	// state variables
+	var totalVoters;
+
+	// variables w/r/t loading
+	var spinneropts = {
+	  lines: 13, // The number of lines to draw
+	  length: 20, // The length of each line
+	  width: 10, // The line thickness
+	  radius: 30, // The radius of the inner circle
+	  corners: 1, // Corner roundness (0..1)
+	  rotate: 0, // The rotation offset
+	  direction: 1, // 1: clockwise, -1: counterclockwise
+	  color: '#000', // #rgb or #rrggbb or array of colors
+	  speed: 1, // Rounds per second
+	  trail: 60, // Afterglow percentage
+	  shadow: false, // Whether to render a shadow
+	  hwaccel: false, // Whether to use hardware acceleration
+	  className: 'spinner', // The CSS class to assign to the spinner
+	  zIndex: 2e9, // The z-index (defaults to 2000000000)
+	  top: '50%', // Top position relative to parent
+	  left: '50%' // Left position relative to parent
+	};
+	var spinner, ajaxCount = 0;
+
+	// FUNCTIONS
+
+	function createFilters() {
+		var formItems = '<label for="states">State:</label>  <select NAME="states" id="states" onchange="getFilters(true)"></select>&nbsp;';
+
+		for(var f in filters) {
+			formItems += '<label for="'+f+'">'+f+':</label><select NAME="'+f+'" id="'+f+'" onchange="getFilters(false)"></select>&nbsp;';
+		}
+
+		formItems += '<button onclick="getReport()">Generate Report</button>';
+
+		$("#filters").html(formItems);
+	}
+
+	function createTables() {
+		var tableItems = '';
+
+		for(var t in tables) {
+			tableItems += '<h3>' + t + ' Breakdown</h3>';
+			tableItems += '<table border="1" id="'+t+'" name="'+t+'"></table>';
+		}
+
+		$("#tables").html(tableItems);
+	}
+
+	function fillStatesList() {
+	    var i = 0;
+	    var listItems;
+
+	    for(var propertyName in states) {
+	    	listItems += "<option value='" + states[propertyName] + "'>" + propertyName + "</option>";
+		}
+
+		$("#states").html(listItems);
+	}
+
+	function ajaxIncr() {
+		if(ajaxCount++ == 0) {
+			spinner = new Spinner(spinneropts).spin(document.body);
+		}
+	}
+
+	function ajaxDecr() {
+		if(--ajaxCount == 0) {
+			spinner.stop();
+		}
+	}
+
+	function getFilters(reset) {
+		var baseURL = "https://lincoln.gopdatatrust.com/v2/api/query.php?ClientToken="+token+"&q=";
+
+		for(var f in filters) {
+			if(reset) {
+				filters[f] = "";
+			}
+			else {
+				filters[f] = $("#"+f).val();
+			}
+		}
+
+		for(var f in filters) {
+			getFilter(f, baseURL);
+		}
+	}
+
+	function getFilter(filter, baseURL) {
+		var state = $("#states").val();
+		var query = "SELECT DISTINCT " + filter + " ";
+		var where = "";
+
+	    for(var f in filters) {
+	    	if(filters[f] != '' && f != filter) {
+		    	if(where != '') {
+		    		where += "%20AND%20";
+		    	}
+
+	    		where += f + "%3D'" + filters[f] + "'";
+	    	}
+	    }
+
+	    if (where != "") {
+		    query += "WHERE " + where + " AND StateAbbreviation='" + state + "'";
+		} else {
+			query += "WHERE StateAbbreviation%3D'" + state + "'"; 
+		}
+
+		query += " LIMIT 100";
+
+		ajaxIncr();
+		$.ajax({
+			url: baseURL+query,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+				    var formItems= "<option value=''></option>";
+
+				    for(var j in json["Results"]) {
+				    	if (json["Results"][j][filter.toLowerCase()] != "") {
+					    	formItems += "<option";
+
+					    	if(json["Results"][j][filter.toLowerCase()] == filters[filter]) {
+					    		formItems += " selected ";
+					    	}
+
+					    	formItems += " value='" + json["Results"][j][filter.toLowerCase()] + "'>" + json["Results"][j][filter.toLowerCase()] + "</option>";
+				    	}
+					}
+
+					$("#"+filter).html(formItems);
+
+					ajaxDecr();
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+					ajaxDecr();
+				},
+ 			async:true,
+		});
+	}
+
+	function getVoterCount(where) {
+		var state = $("#states").val();
+
+		if(where == "") {
+			where = " StateAbbreviation='" + state + "'";
+		} else {
+			where += " AND StateAbbreviation='" + state + "'";
+		}
+
+		var aURL = "https://lincoln.gopdatatrust.com/v2/api/query.php?ClientToken="+token+"&q=SELECT count(firstname) WHERE " + where + " LIMIT 100";
+
+		ajaxIncr();
+		$.ajax({
+			url: aURL,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					totalVoters=json["Results"][0]["count_firstname"];
+					ajaxDecr();
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+					ajaxDecr();
+				},
+ 			async:false,
+		});
+
+		var where = "";
+
+	    for(var f in filters) {
+	    	if(filters[f] != '') {
+		    	if(where != '') {
+		    		where += "%20AND%20";
+		    	}
+
+	    		where += f + "%3D'" + filters[f] + "'";
+	    	}
+	    }
+
+		if(where == "") {
+			where = " StateAbbreviation='" + state + "'";
+		} else {
+			where += " AND StateAbbreviation='" + state + "'";
+		}
+
+		var tvURL = "https://lincoln.gopdatatrust.com/v2/api/query.php?ClientToken="+token+"&q=SELECT firstname,middlename,lastname WHERE " + where  + " LIMIT 10000";
+
+		$("#totalVoters").html('Total Voters: <a href="' + tvURL + '">' + totalVoters + "</a>");
+	}
+
+	function getReport() {
+		var baseURL = "https://lincoln.gopdatatrust.com/v2/api/query.php?ClientToken="+token+"&q=";
+		var where = "";
+
+	    for(var f in filters) {
+	    	if( filters[f] != '' ) {
+		    	if(where != '') {
+		    		where += "%20AND%20";
+		    	}
+
+	    		where += f + "%3D'" + filters[f] + "'";
+	    	}
+	    }
+
+	    getVoterCount(where);
+
+	    for(var t in tables) {
+	    	getTable(t, baseURL, where);
+	    }
+	}
+
+	function getTable(table, baseURL, where) {
+		var state = $("#states").val();
+
+		if(where == "") {
+			where = " StateAbbreviation='" + state + "'";
+		} else {
+			where += " AND StateAbbreviation='" + state + "'";
+		}
+
+		var aURL = baseURL + "SELECT " +table + ", count("+table+") WHERE " + where + " AND StateAbbreviation='" + state + "' GROUP BY " + table + " LIMIT 100";
+
+		ajaxIncr();
+		$.ajax({
+			url: aURL,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					var tableItems="";
+
+				    for(var j in json["Results"]) {
+				    	var label;
+				    	var value = json["Results"][j]["count_"+table.toLowerCase()];
+						var percentage = parseInt(value) / parseInt(totalVoters) * 100;
+
+						if(tables[table] != null) {
+							label = tables[table][ json["Results"][j][table.toLowerCase()] ];
+						}
+						else {
+							label = json["Results"][j][table.toLowerCase()];
+						}
+
+				    	tableItems+="<tr><td><i>"+label+"</i></td><td>" + value + "</td><td>"+percentage.toFixed(2)+"%</td></tr>";
+					}
+
+					$("#"+table).html(tableItems);
+					ajaxDecr();
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+					ajaxDecr();
+				},
+ 			async:true,
+		});
+	}
+
+	function startFilters() {
+		token = $("#token").val();
+
+		createFilters();
+		fillStatesList();
+		getFilters(true);
+		createTables();
+	}
+</SCRIPT>
+</HEAD>
+<BODY>
+	<input type="text" id="token" style="width:100px;" value="YOUR-TOKEN-GOES-HERE"><button type="button" onclick="startFilters()">Get Filters</button><br><br>
+	<div id="filters" name="filters"></div><br>
+	<span name="totalVoters" id="totalVoters"></span><br>
+	<div id="tables"></div>
+</BODY>
+</HTML>

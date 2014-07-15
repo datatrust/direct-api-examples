@@ -1,0 +1,29 @@
+<HTML>
+<HEAD>
+	<TITLE>Complex Query Report</TITLE>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+	function doQuery() {
+		q = $("#query").val();
+		q = encodeURIComponent(q);
+		$url = "https://lincoln.gopdatatrust.com/v2/api/query.php?ClientToken="+$("#token").val()+"&q="+q+"&format="+$("#format").val()+"&Dont_Wrap=1";
+		document.getElementById("result").src = $url;
+		alert($url);
+	}
+</SCRIPT>
+</HEAD>
+<body>
+	<div style="height:5%; width: 100%;">
+		<input type="text" id="token" style="width:100px;" value="YOUR-TOKEN-GOES-HERE">
+		<input type="text" id="query" style="width:600px;" value="SELECT firstname,count(*) WHERE stateabbreviation='IL' AND congressionaldistrict='1' AND lastname='Smith' GROUP BY firstname LIMIT 5000">
+		<select id="format">
+			<option value="csv">csv</option>
+			<option value="json">json</option>
+			<option value="xml">xml</option>
+		</select> 
+		<button type="button" onclick="doQuery()">query</button>
+		<font size="1"><br><br>See query.php docs for how to form a statement, and also find available fields <a href="https://lincoln.gopdatatrust.com/v2/api/docs/">here</a>. This query will run against api-v2, and will only return the first 5000 results.</font><br><br>
+	</div><br>
+	 <iframe id="result" src="" frameborder=0 width="100%" height="90%" marginheight=0 marginwidth=0 seamless></iframe> 
+</body>
+</HTML>

@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+	<TITLE>API Approval</TITLE>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+	function doQuery() {
+		aURL = "https://lincoln.gopdatatrust.com/v2/api/write_history.php?ClientToken="+$("#token").val()+"&Fields="+$("#fields").val()+"&WriteStatus="+$("#status").val();
+
+		returned_json="";
+
+		$.ajax({
+			url: aURL,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					returned_json = json;
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:false,
+		});
+
+		$html = "<tr><td>Call ID</td><td>Requester</td><td>Call</td><td>Params</td><td>Approve/Decline</td></tr>";
+
+		returned_json.forEach(function(call) {
+   			$html += "<tr>";
+
+			$html += "<td>" + call['_id'] + "</td>";
+   			$html += "<td>" + call['requester'] + "</td>";
+   			$html += "<td>" + call['function_call'] + "</td>";
+   			$html += "<td>"
+
+			for (var key in call['params']) {
+				$html += key + " =&gt; " + call['params'][key] + "</br>";
+			}
+
+   			$html +=  "</td><td>";
+
+   			if(call['status'] == 'pending') {
+   				$html += '<button type="button" onclick="approve(\''+call['_id']+'\')">approve</button><button type="button" onclick="decline(\''+call['_id']+'\')">decline</button>';
+   			}
+
+			$html += "</td></tr>";
+		});
+
+		document.getElementById("approval_table").innerHTML = $html;
+	}
+
+	function approve(api_id) {
+		aURL = "https://lincoln.gopdatatrust.com/v2/api/write_approval.php?ClientToken="+$("#token").val()+"&Call_ID="+api_id+"&Action=approve";
+
+		$.ajax({
+			url: aURL,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					returned_json = json;
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:false,
+		});
+	}
+
+	function decline(api_id) {
+		dURL = "https://lincoln.gopdatatrust.com/v2/api/write_approval.php?ClientToken="+$("#token").val()+"&Call_ID="+api_id+"&Action=decline";
+
+		alert(dURL);
+
+		$.ajax({
+			url: dURL,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					returned_json = json;
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:false,
+		});
+	}
+</SCRIPT>
+</HEAD>
+<body>
+	<div style="height:5%; width: 100%;">
+		<input type="text" id="token" style="width:100px;" value="YOUR-TOKEN-GOES-HERE">
+		<input type="text" id="fields" style="width:600px;" value="personkey">
+		 <select id="status">
+			<option value="pending">pending</option>
+			<option value="approved">approved</option>
+			<option value="complete">complete</option>
+		 </select> 
+
+		<button type="button" onclick="doQuery()">get</button>
+	</div><br>
+	<table id="approval_table" border=1></table>
+</body>
+</HTML>

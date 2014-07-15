@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+	<TITLE>Quick Lookup</TITLE>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" src="http://eligrey.com/demos/FileSaver.js/FileSaver.js"></script>
+<script>
+	function doQuery() {
+		names = $("#name").val();
+		names_array = names.split(" ");
+
+		if(names_array.length == 3) {
+			firstname = names_array[0];
+			middlename = names_array[1];
+			lastname = names_array[2];
+		} else if(names_array.length == 2) {
+			firstname = names_array[0];
+			lastname = names_array[1];
+		}
+
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/fast_match.php?ClientToken="+$("#token").val()+"&FirstName="+firstname+"&LastName="+lastname+"&ReturnFields=firstname,reg_addressline1,reg_addressline2,reg_addressstate,reg_addresszip5,reg_addresszip4,rnc_regid,party,rnccalcparty,statevoteridnumber,middlename,lastname,phonenumber,emailaddress,dateofbirth,sex,personkey";
+
+		if(names_array.length == 3) {
+			qUrl += "&MiddleName=" + middlename;
+		}
+
+		if($("#dateofbirth").val() != "") {
+			qUrl += "&DateOfBirth=" + $("#dateofbirth").val();
+		}
+
+		if($("#zip5").val() != "") {
+			qUrl += "&Reg_AddressZip5=" + $("#zip5").val();
+		}
+
+		if($("#sex").val() != "") {
+			qUrl += "&Sex=" + $("#sex").val();
+		}
+
+		alert(qUrl);
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						str = "Total: " + json["Results_Count"] + "<br><br>";
+
+						for(i=0; i < json["Results"].length; i++) {
+							for(var key in json["Results"][i]) {
+								str += "<b>" + key + "</b>: " + json["Results"][i][key] + "<br>";
+							}
+
+							str+="<br><br>";
+						}
+
+						$("#results").html(str);
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+</SCRIPT>
+</HEAD>
+<body>
+	<div>
+		Token (required): <br><input type="text" id="token" style="width:600px;" value="YOUR-TOKEN-GOES-HERE"><br>
+		Name (required, optionally can include middle): <br><input type="text" id="name" style="width:600px;" value=""><br>
+		Birthdate (YYYYMMDD): <br><input type="text" id="dateofbirth" style="width:600px;" value=""><br>
+		Zip5: <br><input type="text" id="zip5" style="width:600px;" value=""><br>
+		Sex (M/F): <br><input type="text" id="sex" style="width:600px;" value=""><br>
+
+		<button type="button" onclick="doQuery()">lookup</button>
+	</div><br>
+	<div id="results"></div>
+</body>
+</HTML>

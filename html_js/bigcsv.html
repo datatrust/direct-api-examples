@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+	<TITLE>Download Big CSV</TITLE>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" src="http://eligrey.com/demos/FileSaver.js/FileSaver.js"></script>
+<script>
+var results = "";
+var downloaded = 0;
+
+	function updateDownloadedPeople(results) {
+		downloaded+=results;
+		document.getElementById("downloaded").innerHTML = "Downloaded " + downloaded + " results.";
+	}
+
+	function doQuery() {
+		results = "";
+		downloaded=0;
+		updateDownloadedPeople(0);
+
+		q = $("#query").val();
+		q = encodeURIComponent(q);
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/query.php?ClientToken="+$("#token").val()+"&q="+q+"&format=CSV";
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						results += json["Results"];
+						updateDownloadedPeople(json["Results_Count"]);
+
+						if(json["More_Results"]) {
+							getMore(json["Call_ID"]);
+						}
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+
+	function getMore(id) {
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/query.php?ClientToken="+$("#token").val()+"&Call_ID="+id+"&format=CSV";
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						newlineIndex = json["Results"].indexOf("\n");
+						results += json["Results"].substring(newlineIndex+1);
+						updateDownloadedPeople(json["Results_Count"]);
+
+						if(json["More_Results"]) {
+							getMore(json["Call_ID"]);
+						} else {
+							var blob = new Blob([results], {
+					 		   type: "text/plain;charset=utf-8;",
+							});
+
+							saveAs(blob, "download.csv");
+						}
+					}
+					else {
+						alert("("+json["Call_ID"]+")"+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+</SCRIPT>
+</HEAD>
+<body>
+	<div style="height:5%; width: 100%;">
+		<input type="text" id="token" style="width:100px;" value="YOUR-TOKEN-GOES-HERE">
+		<input type="text" id="query" style="width:600px;" value="SELECT firstname,lastname,sex,dateofbirth WHERE congressionaldistrict='1' AND (sex='F' OR dateofbirth>'1987') LIMIT 50000">
+		<button type="button" onclick="doQuery()">download</button>
+		<font size="1"><br><br>See query.php docs for how to form a statement, and also find available fields <a href="https://lincoln.gopdatatrust.com/v2/api/docs/">here</a>. This query will run against api-v2.</font>
+	</div></br></br>
+	<div id="downloaded"></div>
+	<pre id="result"></pre>
+</body>
+</HTML>
