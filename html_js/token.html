@@ -1,0 +1,173 @@
+<HTML>
+<HEAD>
+	<TITLE>Token Management</TITLE>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" src="http://eligrey.com/demos/FileSaver.js/FileSaver.js"></script>
+<script>
+	function getOrgInfo() {
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/token_management.php?OrgToken="+$("#token").val()+"&Action=get";
+		org = null;
+
+		alert(qUrl);
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						org = json["Results"];
+
+						str = '<br>';
+
+						for(var key in json["Results"][0]) {
+							str += "<b>"+key+":</b><br>" + json["Results"][0][key] + '<br>';
+						}
+
+						str += '<br><br>';
+
+						$("#orginfo").html(str);
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+
+	function getClients() {
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/token_management.php?OrgToken="+$("#token").val()+"&Action=get_clients";
+		clients = null;
+
+		alert(qUrl);
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						clients = json["Results"];
+
+						if(json["Results_Count"] > 0) {
+							str = '<br>';
+
+							for(i=0; i < json["Results"].length; i++) {
+								for(var key in json["Results"][i]) {
+									str += "<b>"+key+":</b><br>" + '<input id="val_' + json["Results"][i]['OrganizationClientToken'] + '_' + key + '" type="text" size="100%" value="' + json["Results"][i][key] + '">&nbsp;<button id="' + json["Results"][i]['OrganizationClientToken'] + '_' + key + '" type="button" onclick="updateClient(this.id)">&lt; update</button><br>';
+								}
+
+								str += '<br><br>';
+							}
+
+							/*for(i=0; i < json["Results"].length; i++) {
+								for(var key in json["Results"][i]) {
+									str += "<b>" + key + "</b>: " + json["Results"][i][key] + "<br>";
+								}
+
+								str+="<br><br>";
+							}*/
+
+							$("#clients").html(str);
+						} else {
+							$("#clients").html("No clients yet...");
+						}
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+
+	function updateClient(id) {
+		id_split = id.split("_");
+
+		clienttoken = id_split[0];
+		update_field = id_split[1];
+		field_value = $("#val_" + id).val();
+
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/token_management.php?OrgToken="+$("#token").val()+"&ClientToken=" +clienttoken+ "&Action=set&Attribute=" + update_field + "&Value=" + field_value;
+
+		alert(qUrl);
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						alert("Done");
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+
+	function create() {
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/token_management.php?OrgToken="+$("#token").val() + "&Action=create&ClientName="+ $("#Client_Name").val();
+
+		alert(qUrl);
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						alert("Done");
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+
+	}
+</SCRIPT>
+</HEAD>
+<body>
+	<h1>Organization/Client Token Management</h1>
+	<div>
+		<b>Org Token (required):</b> <br><input type="text" id="token" style="width:600px;" value="ORG-TOKEN-GOES-HERE"><br>
+
+		<hr>
+
+		<button type="button" onclick="getOrgInfo()">get org info</button><br>
+		<div id="orginfo"></div>		
+		<hr>
+
+		<b>Client Name: </b><br><input type="text" id="Client_Name" style="width:600px;"><br>
+		<button type="button" onclick="create()">^ create ^</button>
+
+		<hr>
+
+		<button type="button" onclick="getClients()">get clients</button><br><br>
+		<div id="clients"></div>
+	</div><br>
+	<div id="results"></div>
+</body>
+</HTML>
+
