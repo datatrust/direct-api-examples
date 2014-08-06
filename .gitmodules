@@ -1,0 +1,3 @@
+[submodule "external/data-trust-query-builder"]
+	path = external/data-trust-query-builder
+	url = https://github.com/nrcc/data-trust-query-builder.git

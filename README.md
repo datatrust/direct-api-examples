@@ -10,3 +10,4 @@ Open source examples that hook into the GOP Data Trust Direct API. Pull requests
 
 Once you've received your token, try out some of the examples already hosted at http://www.gopdatatrust.com/examples/, or download them from this repository. We recommend trying out query.html, bigcsv.html, or report.html first. These small example pages are self-contained, and can even be loaded into a web browser without hosting. 
 
+Update 8/6/2014: We've added an external example section. If you've got something you've built that you'd like to show off, let us know.
