@@ -1,0 +1,176 @@
+
+<HTML>
+<HEAD>
+	<TITLE>Fast Match</TITLE>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+	var full_lookup = ["firstname","middlename","lastname","phonenumber","emailaddress","dateofbirth","reg_addressline1","reg_addressline2","reg_addressstate","reg_addresszip5","reg_addresszip4","rnc_regid","party","rnccalcparty","statevoteridnumber","personkey"];
+	var desired_lookup = ["firstname","middlename","lastname","phonenumber","emailaddress","dateofbirth","reg_addressline1","reg_addressline2","reg_addressstate","reg_addresszip5","reg_addresszip4","rnc_regid","party","rnccalcparty","statevoteridnumber","personkey"];
+
+	var provided_headers, final_headers, lines;
+
+	function handleFiles(files) {
+		// Check for the various File API support.
+		if (window.FileReader) {
+			// FileReader are supported.
+			getAsText(files[0]);
+		} else {
+			alert('FileReader are not supported in this browser.');
+		}
+	}
+
+	function getAsText(fileToRead) {
+		var reader = new FileReader();
+		// Handle errors load
+		reader.onload = loadHandler;
+		reader.onerror = errorHandler;
+		// Read file into memory as UTF-8      
+		reader.readAsText(fileToRead);
+	}
+
+	function loadHandler(event) {
+		var csv = event.target.result;
+		processData(csv);             
+	}
+
+	function processData(csv) {
+	    var allTextLines = csv.split(/\r\n|\n|\r/);
+
+	    provided_headers = allTextLines.shift().split(',');
+
+	    for(var i = 0; i < provided_headers.length; i++) {
+	    	var desired_index = desired_lookup.indexOf(provided_headers[i]);
+	    	if(desired_index > -1) {
+	    		desired_lookup.splice(desired_index, 1);
+	    	}
+	    }
+
+	    final_headers = provided_headers.concat(desired_lookup);
+	    final_headers.push("num_matches");
+
+	    lines = [];
+	    while (allTextLines.length) {
+	        var split_line = allTextLines.shift().split(',');
+	        var final_line = {};
+
+	        for(var i = 0; i < split_line.length; i++) {
+	        	final_line[final_headers[i]] = split_line[i].replace(/[\"]/g,"");
+	        }
+
+	        lines.push(final_line);
+	    }
+
+	    for(var i = 0; i < lines.length; i++) {
+	    	doQuery(i);
+	    }
+
+		console.log(lines);
+		drawOutput();
+	}
+
+	function errorHandler(evt) {
+		if(evt.target.error.name == "NotReadableError") {
+			alert("Can't read file !");
+		}
+	}
+
+	function drawOutput(){
+		//Clear previous data
+		document.getElementById("output").innerHTML = "";
+		var table = document.createElement("table");
+
+		var row = table.insertRow(-1);
+		for (var j = 0; j < final_headers.length; j++) {
+			var firstNameCell = row.insertCell(-1);
+			firstNameCell.appendChild(document.createTextNode(final_headers[j]));
+		}
+
+		for (var i = 0; i < lines.length; i++) {
+			var row = table.insertRow(-1);
+			for (var j = 0; j < final_headers.length; j++) {
+				var firstNameCell = row.insertCell(-1);
+
+				if(lines[i][final_headers[j]] !== undefined) {
+					firstNameCell.appendChild(document.createTextNode(lines[i][final_headers[j]]));
+				} else {
+					firstNameCell.appendChild(document.createTextNode(""));
+				}
+			}
+		}
+		document.getElementById("output").appendChild(table);
+	}
+
+	function doQuery(i) {
+		firstname = lines[i]['firstname'].replace(/[\s]/g,"");
+		lastname = lines[i]['lastname'].replace(/[\s]/g,"");
+
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/fast_match.php?ClientToken="+$("#token").val()+"&FirstName="+firstname+"&LastName="+lastname+"&ReturnFields=firstname,reg_addressline1,reg_addressline2,reg_addressstate,reg_addresszip5,reg_addresszip4,rnc_regid,party,rnccalcparty,statevoteridnumber,middlename,lastname,phonenumber,emailaddress,dateofbirth,sex,personkey&Limit=5";
+
+		if(lines[i]['middlename'] !== undefined && lines[i]['middlename']!='') {
+			qUrl += "&MiddleName=" + lines[i]['middlename'];
+			middlename = lines[i]['middlename'].replace(/[\s]/g,"");
+		}
+
+		if(lines[i]['dateofbirth'] !== undefined && lines[i]['dateofbirth']!='') {
+			qUrl += "&DateOfBirth=" + lines[i]['dateofbirth'];
+		}
+
+		if(lines[i]['reg_addresszip5'] !== undefined && lines[i]['dateofbirth']!='') {
+			qUrl += "&Reg_AddressZip5=" + lines[i]['reg_addresszip5'];
+		}
+
+		//alert(qUrl);
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						if(json["Results_Count"] > 0) {
+							for(var j = 0; j < full_lookup.length; j++) {
+								if(json["Results"][0][full_lookup[j]] !== undefined) {
+									lines[i][full_lookup[j]] = json["Results"][0][full_lookup[j]];
+								}
+							}
+						}
+
+						lines[i]['num_matches'] = json["Results_Count"];
+						drawOutput();
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+</SCRIPT>
+</HEAD>
+<body>
+  <div>
+    <form class="form-horizontal well">
+      <legend>
+        <h3>
+          <div id="title">Fast Match Test</div>
+        </h3>
+      </legend>
+      <fieldset>
+		   <strong>Token:</strong>&nbsp;<input type="text" id="token" style="width:600px;" value="CLIENT-TOKEN-GOES-HERE"><br>
+
+          <label for="csvFileInput"> <strong>CSV File:</strong>
+          </label>
+          <input type="file" id="csvFileInput" onchange="handleFiles(this.files)"
+          accept=".csv">
+        </div>
+      </fieldset>
+    </form>
+    <div id="output">
+    </div>
+  </div>
+</body>
+</HTML>

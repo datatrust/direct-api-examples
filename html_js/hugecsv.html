@@ -1,0 +1,91 @@
+
+<HTML>
+<HEAD>
+	<TITLE>Download Huge CSV</TITLE>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+	var Call_ID='';
+	var nIntervId;
+
+	function updateStatus(status) {
+		document.getElementById("status").innerHTML = status;
+	}
+
+	function checkDone() {
+		cUrl = "https://lincoln.gopdatatrust.com/v2/api/get_call.php?ClientToken="+$("#token").val()+"&Call_ID="+Call_ID;
+
+		$.ajax({
+			url: cUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						call = json["Results"][0];
+
+						if(call['status']=='complete') {
+							updateStatus("Done: <a href='" + call['reads'][0]['file_url'] + "'>" + call['reads'][0]['file_url'] + "</a>");
+							window.clearInterval(nIntervId);
+						} else if(call['status']=='failed') {
+							updateStatus("Failed.");
+							window.clearInterval(nIntervId);
+						}
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+
+	function doQuery() {
+		q = $("#query").val();
+		q = encodeURIComponent(q);
+
+		email = $("#email").val();
+
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/query_get_file.php?ClientToken="+$("#token").val()+"&q="+q;
+
+		if(email != 'optional@email.com' && email != '') {
+			qUrl += "&email="+email;
+		}
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					if(json["Success"]) {
+						Call_ID = json["Call_ID"];
+						updateStatus("Request " + Call_ID + " successfully sent. Please stand by.");
+						nIntervId = window.setInterval(checkDone, 10000);
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+
+
+	}
+</SCRIPT>
+</HEAD>
+<body>
+	<div style="height:5%; width: 100%;">
+		<input type="text" id="token" style="width:100px;" value="CLIENT-TOKEN-GOES-HERE">
+		<input type="text" id="query" style="width:600px;" value="SELECT firstname,middlename,lastname,reg_addresszip5 WHERE stateabbreviation='CA' LIMIT 1">
+		<input type="text" id="email" style="width:150px;" value="optional@email.com">
+		<button type="button" onclick="doQuery()">Request CSV</button>
+	</div></br>
+	<div id="status"></div>
+</body>
+</HTML>
