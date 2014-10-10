@@ -1,0 +1,188 @@
+<HTML>
+<HEAD>
+	<TITLE>Tag CSV of Reg IDs</TITLE>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+	var headers, lines;
+	var open_queries=0;
+	var open_taggings=0;
+	var cursor = 0;
+	var i_complete = 0;
+	var t_complete = 0;
+
+	function updateOutput(output) {
+		document.getElementById("output").innerHTML=output;
+	}
+
+	function sleep(millis, callback) {
+	    setTimeout(function()
+	            { callback(); }
+	    , millis);
+	}
+
+	function handleFiles(files) {
+		// Check for the various File API support.
+		if (window.FileReader) {
+			// FileReader are supported.
+			getAsText(files[0]);
+		} else {
+			alert('FileReader are not supported in this browser.');
+		}
+	}
+
+	function getAsText(fileToRead) {
+		var reader = new FileReader();
+		// Handle errors load
+		reader.onload = loadHandler;
+		reader.onerror = errorHandler;
+		// Read file into memory as UTF-8      
+		reader.readAsText(fileToRead);
+	}
+
+	function loadHandler(event) {
+		var csv = event.target.result;
+		processData(csv);             
+	}
+
+	function processData(csv) {
+	    var allTextLines = csv.split(/\r\n|\n|\r/);
+
+	    headers = allTextLines.shift().split(',');
+
+	    lines = [];
+	    while (allTextLines.length) {
+	        var split_line = allTextLines.shift().split(',');
+	        var final_line = {};
+
+	        for(var i = 0; i < split_line.length; i++) {
+	        	final_line[headers[i]] = split_line[i].replace(/[\"]/g,"");
+	        }
+
+	        console.log(JSON.stringify(final_line));
+	        lines.push(final_line);
+	    }
+
+		updateOutput(i_complete + "/" + lines.length + " identified. "+t_complete+"/" + lines.length + " tagged.");
+
+	    doQueries();
+	}
+
+	function checkQueries(){
+	    if(open_queries>0 && open_taggings>0) {
+	    	sleep(1000, checkQueries);
+	    } else {
+	    	doQueries();
+	    }
+	};
+
+
+	function doQueries() {
+		for(var i = cursor; i < lines.length; i++) {
+			open_queries++;
+
+			doQuery(i);
+			if(open_queries >= 100) {
+				cursor = i+1;
+				sleep(1000, checkQueries);
+				break;
+			}
+		}
+	}
+
+	function errorHandler(evt) {
+		if(evt.target.error.name == "NotReadableError") {
+			alert("Can't read file !");
+		}
+	}
+
+	function doTag(personkey, ElementName) {
+		open_taggings++;
+		tUrl = "https://lincoln.gopdatatrust.com/v2/api/add_tag.php?ClientToken="+$("#token").val()+"&PersonKey="+personkey+"&ElementYear=2014&ElementName="+ElementName+"&ElementDescription="+ElementName;
+
+		$.ajax({
+			url: tUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					open_taggings--;
+					console.log(json);
+
+					if(json["Success"]) {
+						t_complete++;
+						updateOutput(i_complete + "/" + lines.length + " identified. "+t_complete+"/" + lines.length + " tagged.");
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					open_taggings--;
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+
+	function doQuery(i) {
+		rnc_regid = lines[i]['rnc_regid'].replace(/[\s]/g,"");
+		ElementName = lines[i]['ElementName'].replace(/[\s]/g,"");
+
+		qUrl = "https://lincoln.gopdatatrust.com/v2/api/id_to_id.php?ClientToken="+$("#token").val()+"&rnc_regid="+rnc_regid+"&ReturnField=personkey";
+
+		//alert(qUrl);
+
+		$.ajax({
+			url: qUrl,
+			type: 'get',
+			dataType: 'json',
+			cache: false,
+			success: function(json) { 
+					open_queries--;
+					console.log(json);
+
+					if(json["Success"]) {
+						if(json["Results_Count"] > 0) {
+							i_complete++;
+							updateOutput(i_complete + "/" + lines.length + " identified. "+t_complete+"/" + lines.length + " tagged. ");
+							doTag(json["Results"][0]["personkey"],ElementName);
+						}
+					}
+					else {
+						alert("("+json["Call_ID"]+") "+json["Error"]);
+					}
+				},
+			error: function(jqXHR, textStatus, errorThrown) {
+					open_queries--;
+					alert(errorThrown);
+				},
+ 			async:true,
+		});
+	}
+</SCRIPT>
+</HEAD>
+<body>
+	<br>
+	<center><img src="http://gopdatatrust.com/assets/logo.png"></center>
+	<br>
+  <div>
+    <form class="form-horizontal well">
+      <legend>
+        <h3>
+          <div id="title">Tag CSV of Reg IDs</div>
+        </h3>
+      </legend>
+      <fieldset>
+		   <strong>Token:</strong>&nbsp;<input type="text" id="token" style="width:600px;" value="CLIENT-TOKEN-GOES-HERE"><br>
+
+          <label for="csvFileInput"> <strong>CSV File:</strong>
+          </label>
+          <input type="file" id="csvFileInput" onchange="handleFiles(this.files)"
+          accept=".csv">
+        </div>
+      </fieldset>
+    </form>
+	<span id="output">Please load a CSV file with headers rnc_regid,ElementName.</span>
+  </div>
+</body>
+</HTML>
