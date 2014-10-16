@@ -1,0 +1,732 @@
+<html>
+<head>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+	<script type="text/javascript" src="https://fgnass.github.io/spin.js/spin.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<style>
+	#header {
+		width:1000px;
+		height:115px;
+	}
+	#data {
+		width:1000px;
+	}
+	#VHs,#Ages,#Countys,#Sexs,#TRCs,#totalPhoness {
+		display:inline-block;
+		width:100%;
+		height:100%;
+		position:relative
+	}
+	#RMPs,#RARs {
+		display:inline-block;
+		width:100%;
+		height:50%;
+		position:relative;
+	}
+	#PCs,#MPCs,#DPNs,#DLWTs{
+		display:inline-block;
+		width:100%;
+		height:90px;
+		position:relative;
+	}
+	img {
+		height:100%;
+		width:auto;
+	}
+	#headert,#bodyt {
+		width:100%;
+		vertical-align:middle;
+		display:table;
+	}
+	tr {
+		vertical-align:inherit;	
+	}
+	#bodyt td{
+		text-align:center;
+		vertical-align:top;
+	}
+</style>
+</head>
+<body>
+<div ng-app="" ng-controller="reporting">
+<div id='header'>
+	<table id='headert'>
+		<tr>
+			<td style='height:100px;width:415px'>
+				<img src='http://gopdatatrust.com/assets/logo.png'>
+			</td>
+			<td style='text-align:right'>
+				<h2><b>Voter File Profile:<br>
+				Rhode Island, Congressional District 1</b></h2>
+			</td>
+		</tr>
+	</table>
+</div>
+<div id='data'>
+	<table id='bodyt' border=1>
+		<tr>
+			<td width='350px'>
+				<div id="RMPs" style="vertical-align:top">
+				<div id="chart_div"  align='center'></div></div><br>
+				<div id="RARs" style="vertical-align:top"> 
+				<div id="chart_divA"  align='center'></div></div>
+			</td>
+			<td>
+				<h4><b><u>Party Counts</u></b></h4>
+				<div id="PCs" ng-hide="PCshide"></div>
+				<div ng-show="PCshide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>Party</b></td>
+						<td><b>Total Voters</b></td>
+					</tr>
+					<tr ng-repeat='x in PC'>
+						<td>{{ x.party }}</td>
+						<td>{{ x.count | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+				<h4><b><u>Modeled Party Counts</h4></b></u>
+				<div id="MPCs" ng-hide="MPCshide"></div>
+				<div ng-show="MPCshide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>Modeled Party</b></td>
+						<td><b>Total Voters</b></td>
+					</tr>
+					<tr ng-repeat='x in PartyM'>
+						<td>{{ x.rnccalcparty }}</td>
+						<td>{{ x.count | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+			</td>
+			<td>
+				<div id="VHs">
+				<h4><b><u>Vote History</h4></b></u>
+				</div>
+				<div id="VHt" ng-hide="VHthide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>Election</b></td>
+						<td><b>Total Voters</b></td>
+					</tr>
+					<tr ng-repeat='x in VH'>
+						<td>{{ x.electioncode }}</td>
+						<td>{{ x.count | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div id="Sexs">
+				<h4><b><u>Gender Summary</h4></b></u>
+				</div>
+				<div ng-hide="Sexspace" style="min-height:140px"></div>
+				<div id="Sext" ng-hide="Sexthide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>Gender</b></td>
+						<td><b>Total Voters</b></td>
+					</tr>
+					<tr ng-repeat='x in Sex'>
+						<td>{{ x.sex }}</td>
+						<td>{{ x.count | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+			</td>
+			<td>
+				<div id="Ages">
+				<h4><b><u>Age Summary</h4></b></u>
+				</div>
+				<div id="Aget" ng-hide="Agethide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>Age Range</b></td>
+						<td><b>Total Voters</b></td>
+					</tr>
+					<tr ng-repeat='x in Age'>
+						<td>{{ x.agerange }}</td>
+						<td>{{ x.count | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+			</td>
+			<td>
+				<div id="Countys">
+				<h4><b><u>Voters by County</h4></b></u>
+				</div>
+				<div id="Countyt" ng-hide="Countythide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>County Name</b></td>
+						<td><b>Total Voters</b></td>
+					</tr>
+					<tr ng-repeat='x in County'>
+						<td>{{ x.countyname }}</td>
+						<td>{{ x.count | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<h4><b><u>Distinct Phone Numbers</h4></b></u>
+				<div id="DPNs" ng-hide="DPNshide"></div>
+				<div ng-show="DPNshide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>Total Phones</b></td>
+						<td>{{ DP | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+				<br>
+				<h4><b><u>Distinct Land/Wireless Totals</h4></b></u>
+				<div id="DLWTs" ng-hide="DLWTshide"></div>
+				<div ng-show="DLWTshide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>Non-Wireless</b></td>
+						<td>{{ DP - Wireless | number:0 }}</td>
+					</tr>
+					<tr>
+						<td><b>Wireless</b></td>
+						<td>{{ Wireless | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+			</td>
+			<td>
+				<div id="totalPhoness">
+				<h4><b><u>Total Has | Has No Phone</h4></b></u>
+				</div>
+				<div id="totalPhonest" ng-hide="totalPhonesthide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>Has Phone</b></td>
+						<td>{{ totalPhones | number:0 }}</td>
+					</tr>
+					<tr>
+						<td><b>Has No Phone</b></td>
+						<td>{{ totalVoters - totalPhones | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+			</td>
+			<td>
+				<div id="TRCs">
+				<h4><b><u>Telephone Reliability Code</h4></b></u>
+				</div>
+				<div id="TRCt" ng-hide="TRCthide">
+				<table id="inside" align='center' class="table table-striped table-condensed">
+					<tr>
+						<td><b>TRC</b></td>
+						<td><b>Total Phones</b></td>
+					</tr>
+					<tr ng-repeat='x in TRC'>
+						<td>{{ x.phonereliabilityscore }}</td>
+						<td>{{ x.count | number:0 }}</td>
+					</tr>
+				</table>
+				</div>
+			</td>
+		</tr>
+	</table>
+</div>
+</div>
+<script>
+
+var spinneropts = {
+	lines: 13, // The number of lines to draw
+	length: 14, // The length of each line
+	width: 8, // The line thickness
+	radius: 15, // The radius of the inner circle
+	corners: 1, // Corner roundness (0..1)
+	rotate: 0, // The rotation offset
+	direction: 1, // 1: clockwise, -1: counterclockwise
+	color: '#000', // #rgb or #rrggbb or array of colors
+	speed: 1, // Rounds per second
+	trail: 60, // Afterglow percentage
+	shadow: false, // Whether to render a shadow
+	hwaccel: false, // Whether to use hardware acceleration
+	className: 'spinner', // The CSS class to assign to the spinner
+	zIndex: 2e9, // The z-index (defaults to 2000000000)
+	top: '50%', // Top position relative to parent
+	left: '50%', // Left position relative to parent
+	position: 'relative',
+};
+var VHtarget = document.getElementById('VHs');
+var VHspinner = new Spinner(spinneropts).spin(VHtarget);
+var Agetarget = document.getElementById('Ages');
+var Agespinner = new Spinner(spinneropts).spin(Agetarget);
+var Sextarget = document.getElementById('Sexs');
+var Sexspinner = new Spinner(spinneropts).spin(Sextarget);
+var Countytarget = document.getElementById('Countys');
+var Countyspinner = new Spinner(spinneropts).spin(Countytarget);
+var TRCtarget = document.getElementById('TRCs');
+var TRCspinner = new Spinner(spinneropts).spin(TRCtarget);
+var totalPhonestarget = document.getElementById('totalPhoness');
+var totalPhonesspinner = new Spinner(spinneropts).spin(totalPhonestarget);
+var RMPtarget = document.getElementById('RMPs');
+var RMPspinner = new Spinner(spinneropts).spin(RMPtarget);
+var RARtarget = document.getElementById('RARs');
+var RARspinner = new Spinner(spinneropts).spin(RARtarget);
+var PCtarget = document.getElementById('PCs');
+var PCspinner = new Spinner(spinneropts).spin(PCtarget);
+var MPCtarget = document.getElementById('MPCs');
+var MPCspinner = new Spinner(spinneropts).spin(MPCtarget);
+var DPNtarget = document.getElementById('DPNs');
+var DPNspinner = new Spinner(spinneropts).spin(DPNtarget);
+var DLWTtarget = document.getElementById('DLWTs');
+var DLWTspinner = new Spinner(spinneropts).spin(DLWTtarget);
+
+google.load('visualization', '1.0', {'packages':['corechart']});
+function drawChart(dataForChart, title, divID) {
+
+	var data = new google.visualization.DataTable();
+	data.addColumn('string', 'Label');
+	data.addColumn('number', 'Count');
+	data.addColumn({type:'string', role:'style'});
+	data.addColumn({type:'string', role:'annotation'});
+	data.addRows(dataForChart);
+
+	var options = {
+		'title': title,
+		'titleTextStyle': {
+		  'fontSize': 16
+		},
+		'vAxis': {'minValue':0},
+		'width':340,
+		'height':200,
+		'legend':{'position':'none'},
+		'hAxis':{'textStyle':{fontSize:9}},
+		'chartArea': {'height': '65%', 'width':'80%'},
+		'enableInteractivity': false,
+	};
+
+	var chart = new google.visualization.ColumnChart(document.getElementById(divID));
+	chart.draw(data, options);
+};
+
+function reporting($scope) {
+	token = "CLIENT-TOKEN-GOES-HERE";
+	
+	$scope.VHthide = true;
+	$scope.Sexthide = true;
+	$scope.Agethide = true;
+	$scope.Countythide = true;
+	$scope.TRCthide = true;
+	$scope.totalPhonesthide = true;
+	$scope.Sexspace = false;
+	$scope.PCshide = false;
+	$scope.MPCshide = false;
+	$scope.DPNshide = false;
+	$scope.DLWTshide = false;
+	
+	qBase = 'https://lincoln.gopdatatrust.com/v2/api/query.php?ClientToken=' + token + '&q=';
+	StateCD = "stateabbreviation='IL' AND congressionaldistrict='1'";
+	
+	qSex = encodeURIComponent("SELECT DISTINCT sex,count(*) WHERE " + StateCD + " GROUP BY sex LIMIT 5000");
+	qPartyM = encodeURIComponent("SELECT DISTINCT rnccalcparty,count(*) WHERE " + StateCD + " GROUP BY rnccalcparty LIMIT 5000");
+	qVH = encodeURIComponent("SELECT electioncode,COUNT(*) WHERE " + StateCD + " AND (electioncode='VH12G' OR electioncode='VH12P' OR electioncode='VH10G' OR electioncode='VH10P' OR electioncode='VH08G' OR electioncode='VH08P' OR electioncode='VH06G' OR electioncode='VH06P' OR electioncode='VH04G' OR electioncode='VH04P') AND vote='Y' GROUP BY electioncode LIMIT 5000");
+	qAge = encodeURIComponent("SELECT DISTINCT agerange,count(*) WHERE " + StateCD + " GROUP BY agerange LIMIT 5000");
+	qDP = encodeURIComponent("SELECT COUNT(DISTINCT phonenumber) WHERE " + StateCD + " LIMIT 5000");
+	qWireless = encodeURIComponent("SELECT COUNT(*) WHERE " + StateCD + " AND iswireless='1' LIMIT 5000");
+	qTRC = encodeURIComponent("SELECT DISTINCT phonereliabilityscore,count(*) WHERE " + StateCD + " AND phonenumber > '1000000000' GROUP BY phonereliabilityscore LIMIT 5000");
+	qCounty = encodeURIComponent("SELECT DISTINCT countyname,count(*) WHERE " + StateCD + " GROUP BY countyname LIMIT 5000");
+	qPartyC = encodeURIComponent("SELECT DISTINCT party,count(*) WHERE " + StateCD + " GROUP BY party LIMIT 5000");
+
+	
+
+	$.ajax({ // Gender Summary (Sex)
+		url: qBase + qSex,
+		type: 'get',
+		dataType: 'json',
+		cache: true,
+		async:true,	
+		success: function(json) {
+			if(json["Success"]) {
+				tempS = json['Results'];
+				for (i=0; i< tempS.length; i++) {
+					if (tempS[i]['sex'] == 'F'){
+						tempS[i]['sex'] = 'Female';
+					} else if (tempS[i]['sex'] == 'M'){
+						tempS[i]['sex'] = 'Male';
+					} else if (tempS[i]['sex'] == 'U'){
+						tempS[i]['sex'] = 'Unknown';
+					}
+				}
+				if (tempS.length == 4){
+					tempS[3]['count'] = Number(tempS[3]['count']) + Number(tempS[0]['count']);
+					tempS = tempS.slice(1,4);
+					$scope.Sexspace = true;
+					$scope.Sexthide = false;
+					Sexspinner.stop();
+					$scope.$apply(function(){$scope.Sex = tempS;});
+				} else { 
+					$scope.Sexspace = true;
+					$scope.Sexthide = false;
+					Sexspinner.stop();
+					$scope.$apply(function(){$scope.Sex = tempS;});
+				}
+			}
+			else {
+				console.log("("+json["Call_ID"]+") "+json["Error"]);
+			}
+			
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+				alert(errorThrown);
+			}
+	});
+
+	$.ajax({ // Modeled Party Count (PartyM)
+		url: qBase + qPartyM,
+		type: 'get',
+		dataType: 'json',
+		cache: true,
+		async:true,	
+		success: function(json) {
+			if(json["Success"]) {
+				temp = json['Results'];
+				temps = new Array();
+				var total = 0;
+				for (i=0; i< temp.length; i++) {
+					temporary = new Array();
+					temporary[0] = temp[i]['rnccalcparty'];
+					temporary[1] = Number(temp[i]['count']);
+					total = total + temporary[1];
+					temps.push(temporary);
+					temp[i]['rnccalcparty'] = partyMSwitch(temp[i]['rnccalcparty']).replace("\n"," ");
+				}
+				for (i=0; i< temps.length; i++) {
+					temps[i][1] = Math.round(temps[i][1]/total*100);
+					temps[i][2] = partyMColor(temps[i][0]);
+					temps[i][0] = partyMSwitch(temps[i][0]);
+					temps[i][3] = temps[i][1] + "%";
+				}
+				$scope.MPCshide = true;
+				MPCspinner.stop();
+				RMPspinner.stop();
+				$scope.$apply(function(){$scope.totalVoters = total});
+				drawChart(temps, 'Registration by Modeled Party', 'chart_div');
+				$scope.$apply(function(){$scope.PartyM = temp;});
+				
+			}
+			else {
+				console.log("("+json["Call_ID"]+") "+json["Error"]);
+			}
+			
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+				alert(errorThrown);
+			}
+	});
+	$.ajax({ // Vote History (VH)
+		url: qBase + qVH,
+		type: 'get',
+		dataType: 'json',
+		cache: true,
+		async:true,	
+		success: function(json) {
+			if(json["Success"]) {
+				
+				tempVH = (json['Results']).reverse();
+				for (i=0; i< tempVH.length; i++) {
+					tempVH[i]['electioncode'] = vhSwitch(tempVH[i]['electioncode']);
+				}
+				$scope.VHthide = false;
+				VHspinner.stop();
+				$scope.$apply(function(){$scope.VH = tempVH;});
+			}
+			else {
+				console.log("("+json["Call_ID"]+") "+json["Error"]);
+			}
+			
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+				alert(errorThrown);
+			}
+	});
+	$.ajax({ // Age Range (Age)
+		url: qBase + qAge,
+		type: 'get',
+		dataType: 'json',
+		cache: true,
+		async:true,	
+		success: function(json) {
+			if(json["Success"]) {
+				tempA = json['Results'];
+				for (i=0; i< tempA.length; i++) {
+					tempA[i]['agerange'] = (tempA[i]['agerange']).replace("Age ","");
+				}
+				$scope.Agethide = false;
+				Agespinner.stop();
+				$scope.$apply(function(){$scope.Age = tempA;});
+				tempAR = tempA;
+				tempsA = new Array();
+				var total = 0;
+				for (i=0; i< tempAR.length; i++) {
+					temporaryA = new Array();
+					temporaryA[0] = tempAR[i]['agerange'];
+					temporaryA[1] = Number(tempAR[i]['count']);
+					total = total + temporaryA[1];
+					tempsA.push(temporaryA);
+				}
+				for (i=0; i< tempsA.length; i++) {
+					tempsA[i][1] = Math.round(tempsA[i][1]/total*100);
+					tempsA[i][2] = ageColor(tempsA[i][0]);
+					tempsA[i][3] = tempsA[i][1] + "%";
+				}
+				RARspinner.stop();
+				drawChart(tempsA, 'Registration by Age Range', 'chart_divA');
+			}
+			else {
+				console.log("("+json["Call_ID"]+") "+json["Error"]);
+			}
+			
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+				alert(errorThrown);
+			}
+	});
+	$.ajax({ // Count of distinct phone numbers (DP)
+		url: qBase + qDP,
+		type: 'get',
+		dataType: 'json',
+		cache: true,
+		async:true,	
+		success: function(json) {
+			if(json["Success"]) {
+				$scope.DPNshide = true;
+				DPNspinner.stop();
+				$scope.$apply(function(){$scope.DP = json['Results'][0]['count_distinct_phonenumber'];});
+			}
+			else {
+				console.log("("+json["Call_ID"]+") "+json["Error"]);
+			}
+			
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+				alert(errorThrown);
+			}
+	});
+	$.ajax({ // Count of wireless phones (Wireless)
+		url: qBase + qWireless,
+		type: 'get',
+		dataType: 'json',
+		cache: true,
+		async:true,	
+		success: function(json) {
+			if(json["Success"]) {
+				$scope.DLWTshide = true;
+				DLWTspinner.stop();
+				$scope.$apply(function(){$scope.Wireless = json['Results'][0]['count'];});
+			}
+			else {
+				console.log("("+json["Call_ID"]+") "+json["Error"]);
+			}
+			
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+				alert(errorThrown);
+			}
+	});
+	$.ajax({ // Telephone Reliability Code (TRC)
+		url: qBase + qTRC,
+		type: 'get',
+		dataType: 'json',
+		cache: true,
+		async:true,	
+		success: function(json) {
+			if(json["Success"]) {
+				$scope.$apply(function(){$scope.TRC = json['Results'].reverse();});
+				var totalP = 0;
+				tempP = json['Results'];
+				for (i=0; i< tempP.length; i++) {
+					totalP = totalP + Number(tempP[i]['count']);
+				}
+				$scope.TRCthide = false;
+				TRCspinner.stop();
+				$scope.totalPhonesthide = false;
+				totalPhonesspinner.stop();
+				$scope.$apply(function(){$scope.totalPhones = totalP;});
+			}
+			else {
+				console.log("("+json["Call_ID"]+") "+json["Error"]);
+			}
+			
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+				alert(errorThrown);
+			}
+	});
+	$.ajax({ // Countyname (County)
+		url: qBase + qCounty,
+		type: 'get',
+		dataType: 'json',
+		cache: true,
+		async:true,	
+		success: function(json) {
+			if(json["Success"]) {
+				$scope.Countythide = false;
+				Countyspinner.stop();
+				$scope.$apply(function(){$scope.County = json['Results'];});
+			}
+			else {
+				console.log("("+json["Call_ID"]+") "+json["Error"]);
+			}
+			
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+				alert(errorThrown);
+			}
+	});
+	$.ajax({ // Count of of party (partyC)
+		url: qBase + qPartyC,
+		type: 'get',
+		dataType: 'json',
+		cache: true,
+		async:true,	
+		success: function(json) {
+			if(json["Success"]) {
+				tempPC = json['Results'];
+				var totalPC = 0;
+				for (i=0; i< tempPC.length; i++) {
+					totalPC = totalPC + Number(tempPC[i]['count']);
+					if (tempPC[i]['party'] == 'R') {
+						tempR = Number(tempPC[i]['count']);
+					} else if (tempPC[i]['party'] == 'D') {
+						tempD = Number(tempPC[i]['count']);
+					}
+				}
+				var finalPC = new Array();
+				finalPC.push({'party':'Republican','count':tempR});
+				finalPC.push({'party':'Democrat','count':tempD});
+				finalPC.push({'party':'Unknown','count':(totalPC - tempR - tempD)});
+				$scope.PCshide = true;
+				PCspinner.stop();
+				$scope.$apply(function(){$scope.PC = finalPC;});
+			}
+			else {
+				console.log("("+json["Call_ID"]+") "+json["Error"]);
+			}
+			
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+				alert(errorThrown);
+			}
+	});
+
+
+}
+// Changes RNC Party Model from digit to description
+function partyMSwitch(partyN){
+	switch (partyN) {
+		case '1':
+			return "(1)\nStrong\nGOP";
+			break;
+		case '2':
+			return "(2)\nWeak\nGOP";
+			break;
+		case '3':
+			return "(3)\nSwing/\nInd";
+			break;
+		case '4':
+			return "(4)\nWeak\nDem";
+			break;
+		case '5':
+			return "(5)\nStrong\nDem";
+			break;
+	}
+};
+// Sets colors for the modeled party bar graph
+function partyMColor(partyN) {
+	switch (partyN) {
+		case '1':
+			return "D0423C";
+			break;
+		case '2':
+			return "EF7F7F";
+			break;
+		case '3':
+			return "006300";
+			break;
+		case '4':
+			return "ACD7E5";
+			break;
+		case '5':
+			return "2B406B";
+			break;
+	}
+}
+
+// Set colors for age range bar graph
+function ageColor(age) {
+	switch (age) {
+		case '18-29':
+			return "F35353";
+			break;
+		case '30-39':
+			return "EF1A1A";
+			break;
+		case '40-54':
+			return "BF0D0D";
+			break;
+		case '55-64':
+			return "860909";
+			break;
+		case '65+':
+			return "4C0505";
+			break;
+		case 'Unknown':
+			return "130101";
+			break;
+	}
+}
+
+// Rename election codes
+function vhSwitch(vhN) {
+	switch (vhN) {
+		case 'VH12P':
+			return '2012 Primary';
+			break;
+		case 'VH12G':
+			return '2012 General';
+			break;
+		case 'VH10P':
+			return '2010 Primary';
+			break;
+		case 'VH10G':
+			return '2010 General';
+			break;
+		case 'VH08P':
+			return '2008 Primary';
+			break;
+		case 'VH08G':
+			return '2008 General';
+			break;
+		case 'VH06P':
+			return '2006 Primary';
+			break;
+		case 'VH06G':
+			return '2006 General';
+			break;
+		case 'VH04P':
+			return '2004 Primary';
+			break;
+		case 'VH04G':
+			return '2004 General';
+			break;
+	}
+}
+</script>
+</body>
+</html>
